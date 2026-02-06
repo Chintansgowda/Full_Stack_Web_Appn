@@ -1,0 +1,62 @@
+services:
+
+  database:
+    build:
+      context: ./db
+    container_name: database
+
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_USER: appuser
+      MYSQL_PASSWORD: apppass
+      MYSQL_DATABASE: contactsdb
+
+    volumes:
+      - mysqldata:/var/lib/mysql
+
+    networks:
+      - fullstack-net
+
+
+  backend:
+    build:
+      context: ./backend
+
+    environment:
+      DB_HOST: database      #should be same as service name of mysqldatabase that is "database"
+      DB_USER: appuser       #should be same as MYSQL_USER in database service
+      DB_PASSWORD: apppass   #should be same as MYSQL_PASSWORD in database service
+      DB_NAME: contactsdb    #should be same as MYSQL_DATABASE in database service
+
+    ports:
+      - "3000:3000" #host:container
+
+    depends_on:
+      - database   #NOTE: this controls startup order but does NOT wait for DB readiness
+
+    networks:
+      - fullstack-net
+
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dockerfile.prod
+
+    ports:
+      - "80:80"
+
+    depends_on:
+      - backend
+
+    networks:
+      - fullstack-net
+
+
+volumes: 
+  mysqldata:
+
+
+networks:
+  fullstack-net:
+    driver: bridge  #bridge is the correct driver for container networking
